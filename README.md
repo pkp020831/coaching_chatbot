@@ -1,8 +1,17 @@
 # 화학 수업 챗봇 파이프라인
 
-현재는 전사가 끝난 대본을 입력받아 **2단계 파싱·청킹**, **3단계 메타데이터 SQLite
-DB 저장**, **4단계 BM25 검색**, **5단계 Gemini 서술형 답변·평가**까지 구현합니다.
-전사 단계는 통과한 것으로 간주합니다.
+ZOOM으로 화학 과외를 진행하고 있다.
+이 수업 녹화영상을 전사하여 해당 수업 관련 질문을 받아주는 챗봇을 제작하고자 한다.
+
+# 파이프라인
+
+1단계 Gemini api로 음성파일 전사 (현재는 생략)
+2단계 파싱·청킹
+3단계 메타데이터 SQLite -> DB 저장
+4단계 BM25 검색
+5단계 Gemini 서술형 답변 + 평가 LLM을 배치하여 피드백 (현재는 구현하지 못함)
+
+음성파일은 용량이 크고 전사가 오래걸리므로 시간관계상 전사 완료된 대본으로 진행
 
 ## GitHub에서 처음 시작하기
 
@@ -17,7 +26,39 @@ DB 저장**, **4단계 BM25 검색**, **5단계 Gemini 서술형 답변·평가*
 올라가지 않습니다. 따라서 처음 클론한 사용자는 자신의 대본으로 2·3단계를 한 번
 실행해 DB를 만들어야 합니다.
 
-### 2. 저장소 클론과 Python 설치
+### 2. Windows에서 가장 간단하게 설치하기
+
+Windows에서는 **PowerShell**을 열고 저장소를 클론한 뒤 아래 명령을 실행합니다.
+
+```powershell
+git clone <저장소-URL>
+cd <클론된-폴더명>
+powershell -ExecutionPolicy Bypass -File .\scripts\setup_windows.ps1
+```
+
+이 스크립트가 Python 가상환경 생성, Python 패키지 설치, `.env` 생성, 웹 패키지
+설치를 차례대로 처리합니다. 가상환경을 직접 활성화할 필요도 없습니다. 설치 후 `.env`를
+메모장이나 VS Code로 열어 `GEMINI_API_KEY`만 입력하세요.
+
+그다음 PowerShell 창을 두 개 열고 프로젝트 폴더에서 각각 실행합니다.
+
+```powershell
+# 첫 번째 PowerShell: 검색·답변 API
+powershell -ExecutionPolicy Bypass -File .\scripts\start_api_windows.ps1
+```
+
+```powershell
+# 두 번째 PowerShell: 웹 화면
+powershell -ExecutionPolicy Bypass -File .\scripts\start_web_windows.ps1
+```
+
+Windows에서 웹 폴더로 직접 이동해 실행하려면 `npm run dev:windows`를 사용합니다.
+macOS·Linux의 기존 `npm run dev` 명령도 그대로 유지됩니다.
+
+브라우저에서 `http://localhost:3000/`을 엽니다. Windows 보안 경고가 표시되면
+**개인 네트워크**에서만 Python과 Node.js의 통신을 허용하세요.
+
+### 3. macOS 또는 Linux에서 설치하기
 
 ```bash
 git clone <저장소-URL>
@@ -28,13 +69,7 @@ source .venv/bin/activate
 python3 -m pip install -r requirements.txt
 ```
 
-Windows PowerShell에서는 가상환경을 다음과 같이 활성화합니다.
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-### 3. Gemini API 키 설정
+### 4. Gemini API 키 설정
 
 실제 키를 `.env.example`에 입력하면 안 됩니다. `.env.example`은 GitHub에 올라가는
 공개 설정 양식이고, 실제 키는 Git에서 제외되는 `.env`에만 저장합니다.
@@ -64,7 +99,7 @@ GEMINI_EVALUATOR_MODEL=gemini-3.6-flash
 - `.env.example`의 `GEMINI_API_KEY=`는 계속 빈 상태로 둡니다.
 - 키를 실수로 GitHub에 올렸다면 즉시 해당 키를 폐기하고 새 키를 발급받습니다.
 
-### 4. 자신의 수업 대본으로 DB 생성
+### 5. 자신의 수업 대본으로 DB 생성
 
 대본을 `source/`에 넣은 뒤 실행합니다. 다음 예시는 파일명이 `my_lesson.md`인 경우입니다.
 
@@ -73,9 +108,17 @@ python3 run_chunking.py source/my_lesson.md
 python3 build_database.py artifacts/stage2/my_lesson.chunks.json
 ```
 
+Windows PowerShell에서는 다음처럼 실행합니다. Windows 설치 스크립트를 사용했다면
+가상환경 활성화 없이 그대로 실행할 수 있습니다.
+
+```powershell
+.\.venv\Scripts\python.exe run_chunking.py source\my_lesson.md
+.\.venv\Scripts\python.exe build_database.py artifacts\stage2\my_lesson.chunks.json
+```
+
 정상적으로 완료되면 `data/lessons.sqlite3`가 생성됩니다.
 
-### 5. 웹 패키지 설치
+### 6. 웹 패키지 설치
 
 ```bash
 cd web
@@ -83,7 +126,7 @@ npm install
 cd ..
 ```
 
-### 6. 챗봇 실행
+### 7. 챗봇 실행
 
 첫 번째 터미널에서 검색·답변 API를 실행합니다.
 
@@ -99,11 +142,24 @@ cd web
 npm run dev
 ```
 
+Windows PowerShell에서 수동으로 실행하는 경우에는 다음 명령을 사용합니다.
+
+```powershell
+cd web
+npm run dev:windows
+```
+
 브라우저에서 `http://localhost:3000/`을 엽니다. API 설정 상태는 다음 주소에서도
 확인할 수 있습니다.
 
 ```bash
 curl http://127.0.0.1:8765/health
+```
+
+Windows PowerShell에서는 다음 명령으로 확인합니다.
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8765/health
 ```
 
 응답의 `"gemini_configured": true`가 확인되면 API 키가 정상적으로 읽힌 것입니다.
@@ -115,6 +171,49 @@ curl http://127.0.0.1:8765/health
 ```bash
 python3 answer_with_llm.py "열용량이 무엇인가요?"
 ```
+
+Windows에서는 `python3` 대신 `.\.venv\Scripts\python.exe`를 사용하면 됩니다.
+
+### Windows 수동 설치가 필요한 경우
+
+자동 설치 스크립트를 사용하지 않으려면 PowerShell에서 아래 명령을 한 줄씩
+실행합니다.
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+cd web
+npm install
+cd ..
+```
+
+`py` 명령이 없다면 첫 줄의 `py -3`을 `python`으로 바꾸세요. 가상환경 활성화를
+원한다면 `.\.venv\Scripts\Activate.ps1`을 실행할 수 있지만 필수는 아닙니다.
+활성화가 실행 정책 때문에 차단되면 현재 PowerShell 창에서만 다음 설정을 적용합니다.
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+### Windows에서 자주 발생하는 문제
+
+- `python`, `py` 또는 `npm`을 찾을 수 없다는 메시지: Python이나 Node.js를 설치한
+  뒤 **PowerShell을 완전히 닫고 새로 열어** 다시 실행합니다.
+- `running scripts is disabled` 메시지: README의
+  `powershell -ExecutionPolicy Bypass -File ...` 형태로 실행합니다. 시스템 전체 실행
+  정책은 바꿀 필요가 없습니다.
+- `Address already in use` 또는 `WinError 10048`: 이미 API가 실행 중인지
+  `Invoke-RestMethod http://127.0.0.1:8765/health`로 확인합니다. 정상 응답이면 API를
+  다시 실행하지 않아도 됩니다.
+- 웹은 열리지만 답변이 나오지 않음: API용 PowerShell과 웹용 PowerShell 두 창이
+  모두 실행 중인지, `/health` 응답의 `gemini_configured`가 `True`인지 확인합니다.
+- Windows Defender 방화벽 경고: 공용 네트워크에는 허용하지 말고 개인 네트워크에서만
+  허용합니다. 이 프로젝트는 `127.0.0.1` 로컬 주소만 사용합니다.
+
+GitHub Actions도 Ubuntu와 Windows에서 Python 테스트, SQLite FTS5 검색 테스트, 웹
+빌드·테스트를 각각 실행하도록 설정되어 있습니다.
 
 ## 2단계 실행
 
