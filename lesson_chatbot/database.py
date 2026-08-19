@@ -8,6 +8,8 @@ import re
 import sqlite3
 import unicodedata
 from collections import Counter
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -227,21 +229,32 @@ def enrich_chunks(lesson_id: str, raw_chunks: list[dict[str, Any]]) -> list[dict
     return enriched
 
 
-def connect_database(path: Path) -> sqlite3.Connection:
+@contextmanager
+def connect_database(path: Path) -> Iterator[sqlite3.Connection]:
+    """트랜잭션을 처리하고 파일 잠금이 남지 않도록 연결을 닫는다."""
     path.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(path)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute("PRAGMA journal_mode = DELETE")
-    connection.execute("PRAGMA synchronous = FULL")
-    connection.executescript(SCHEMA_SQL)
-    connection.execute(
-        "INSERT INTO schema_info(key, value) VALUES('schema_version', ?) "
-        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-        (SCHEMA_VERSION,),
-    )
-    connection.commit()
-    return connection
+    try:
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("PRAGMA journal_mode = DELETE")
+        connection.execute("PRAGMA synchronous = FULL")
+        connection.executescript(SCHEMA_SQL)
+        connection.execute(
+            "INSERT INTO schema_info(key, value) VALUES('schema_version', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (SCHEMA_VERSION,),
+        )
+        connection.commit()
+        try:
+            yield connection
+        except BaseException:
+            connection.rollback()
+            raise
+        else:
+            connection.commit()
+    finally:
+        connection.close()
 
 
 def ingest_stage2_artifact(

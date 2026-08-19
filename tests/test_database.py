@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lesson_chatbot.database import ingest_stage2_artifact, validate_lesson
+from lesson_chatbot.database import connect_database, ingest_stage2_artifact, validate_lesson
 
 
 class DatabaseTest(unittest.TestCase):
@@ -57,7 +57,7 @@ class DatabaseTest(unittest.TestCase):
             database = Path(directory) / "lessons.sqlite3"
             ingestion = ingest_stage2_artifact(artifact, database)
             result = validate_lesson(database, ingestion["lesson_id"], ingestion["enriched_chunks"])
-            with sqlite3.connect(database) as connection:
+            with connect_database(database) as connection:
                 topic_count = connection.execute(
                     "SELECT COUNT(*) FROM chunk_topics WHERE topic = '상태 변화·열에너지'"
                 ).fetchone()[0]
@@ -75,7 +75,7 @@ class DatabaseTest(unittest.TestCase):
             database = Path(directory) / "lessons.sqlite3"
             first = ingest_stage2_artifact(artifact, database)
             second = ingest_stage2_artifact(artifact, database)
-            with sqlite3.connect(database) as connection:
+            with connect_database(database) as connection:
                 lesson_count = connection.execute("SELECT COUNT(*) FROM lessons").fetchone()[0]
                 chunk_count = connection.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
 
@@ -83,6 +83,33 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(second["previous_chunk_count_replaced"], 2)
         self.assertEqual(lesson_count, 1)
         self.assertEqual(chunk_count, 2)
+
+    def test_connection_is_closed_after_context(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "lessons.sqlite3"
+            with connect_database(database) as connection:
+                self.assertEqual(connection.execute("SELECT 1").fetchone()[0], 1)
+
+            with self.assertRaises(sqlite3.ProgrammingError):
+                connection.execute("SELECT 1")
+            database.unlink()
+            self.assertFalse(database.exists())
+
+    def test_transaction_rolls_back_on_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "lessons.sqlite3"
+            with self.assertRaisesRegex(RuntimeError, "rollback"):
+                with connect_database(database) as connection:
+                    connection.execute(
+                        "INSERT INTO schema_info(key, value) VALUES('rollback-test', 'pending')"
+                    )
+                    raise RuntimeError("rollback")
+
+            with connect_database(database) as connection:
+                stored = connection.execute(
+                    "SELECT value FROM schema_info WHERE key = 'rollback-test'"
+                ).fetchone()
+            self.assertIsNone(stored)
 
 
 if __name__ == "__main__":
