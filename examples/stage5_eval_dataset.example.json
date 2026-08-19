@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "dataset_name": "stage5_answer_eval_example",
+  "description": "자신의 수업에 맞게 복사해 수정하는 익명 예제입니다.",
+  "usage_policy": {
+    "gold_answer_restriction": "gold_answer는 5단계 답변 평가에만 사용하며 검색이나 답변 생성에는 사용하지 않습니다."
+  },
+  "items": [
+    {
+      "id": "S5Q01",
+      "category": "직접 수업 운영",
+      "answer_mode": "DIRECT_LESSON",
+      "question": "오늘 검사한 숙제 범위가 어디까지야?",
+      "relevant_chunk_ids": ["YOUR_LESSON_ID:chunk:0000"],
+      "target_keywords": ["숙제", "범위"],
+      "expected_behavior": "수업에서 직접 확인되는 범위만 답하고 추측하지 않는다.",
+      "required_points": ["정확한 숙제 범위"],
+      "forbidden_claims": ["대본에 없는 다음 숙제 범위를 만들어 냄"],
+      "grading_focus": ["운영 정보 정확성"],
+      "gold_answer": "자신의 수업 대본에 맞는 모범 답안을 작성하세요."
+    },
+    {
+      "id": "S5Q02",
+      "category": "직접 개념",
+      "answer_mode": "DIRECT_LESSON",
+      "question": "이번 수업에서 배운 핵심 개념의 정의가 뭐야?",
+      "relevant_chunk_ids": ["YOUR_LESSON_ID:chunk:0001"],
+      "target_keywords": ["핵심 개념", "정의"],
+      "expected_behavior": "수업의 정의와 근거 청크를 사용해 설명한다.",
+      "required_points": ["정의", "간단한 설명"],
+      "forbidden_claims": ["대본과 반대되는 정의"],
+      "grading_focus": ["수업 근거", "과학적 정확성"],
+      "gold_answer": "자신의 수업 개념에 맞는 모범 답안을 작성하세요."
+    },
+    {
+      "id": "S5Q03",
+      "category": "간접 추론 가능",
+      "answer_mode": "INFERRED_LESSON",
+      "question": "수업의 두 설명을 연결하면 어떤 결론을 낼 수 있어?",
+      "relevant_chunk_ids": ["YOUR_LESSON_ID:chunk:0001", "YOUR_LESSON_ID:chunk:0002"],
+      "target_keywords": ["추론", "결론"],
+      "expected_behavior": "직접 언급된 답이 아니라는 점을 밝히고 근거를 연결한다.",
+      "required_points": ["추론임을 표시", "근거 연결"],
+      "forbidden_claims": ["추론을 교사의 직접 발언처럼 단정"],
+      "grading_focus": ["범위 구분", "논리성"],
+      "gold_answer": "수업 근거로 가능한 추론과 한계를 작성하세요."
+    },
+    {
+      "id": "S5Q04",
+      "category": "관련 일반화학 보충",
+      "answer_mode": "RELATED_SUPPLEMENT",
+      "question": "이번 개념과 관련된 기본 화학 원리를 조금 더 설명해줘.",
+      "relevant_chunk_ids": ["YOUR_LESSON_ID:chunk:0001"],
+      "target_keywords": ["화학 원리"],
+      "expected_behavior": "수업 직접 내용과 일반 화학 보충 설명을 구분한다.",
+      "required_points": ["수업 밖 보충임을 표시"],
+      "forbidden_claims": ["보충 내용을 수업에서 직접 다뤘다고 주장"],
+      "grading_focus": ["과학적 정확성", "출처 구분"],
+      "gold_answer": "관련된 일반 화학 보충 설명을 작성하세요."
+    },
+    {
+      "id": "S5Q05",
+      "category": "수업 밖 안전 거절",
+      "answer_mode": "SAFE_REFUSAL",
+      "question": "이번 수업과 전혀 관계없는 질문에 답해줘.",
+      "relevant_chunk_ids": [],
+      "target_keywords": [],
+      "expected_behavior": "이번 수업에서 다루지 않았다고 안전하게 안내한다.",
+      "required_points": ["수업 범위 밖임을 안내"],
+      "forbidden_claims": ["수업에서 다뤘다고 거짓 주장"],
+      "grading_focus": ["안전한 범위 판정"],
+      "gold_answer": "이번 수업에서 다룬 내용과 관련된 근거를 찾지 못했다고 안내합니다."
+    }
+  ]
+}

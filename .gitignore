@@ -1,0 +1,32 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# 학생 음성 및 생성된 대본은 Git에 올리지 않습니다.
+*.flac
+*.m4a
+*.mp3
+*.mp4
+*.mpeg
+*.mpga
+*.ogg
+*.wav
+*.webm
+transcripts/
+
+# source에는 사용자가 직접 넣은 음성·대본이 있으므로 안내 파일만 공개합니다.
+source/*
+!source/README.md
+
+# 파싱·청킹 결과에도 학생 발화가 포함되므로 저장소에 올리지 않습니다.
+artifacts/
+
+# 수업 DB에는 학생 이름과 발화가 포함됩니다.
+data/
+
+# 평가 문항에도 학생 이름과 실제 수업 내용이 포함됩니다.
+bm25_eval*.json
+stage5_eval*.json
+!examples/stage5_eval_dataset.example.json
