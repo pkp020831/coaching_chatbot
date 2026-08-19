@@ -54,3 +54,22 @@ test("chat UI calls only the local answer API", async () => {
   assert.match(packageJson, /"name": "chemistry-class-chatbot"/);
   assert.doesNotMatch(page, /https:\/\//);
 });
+
+test("npm scripts provide separate Windows and POSIX commands", async () => {
+  const packageJson = JSON.parse(
+    await readFile(new URL("../package.json", import.meta.url), "utf8"),
+  );
+
+  assert.equal(
+    packageJson.scripts.dev,
+    "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+  );
+  assert.equal(
+    packageJson.scripts["dev:windows"],
+    'set "WRANGLER_LOG_PATH=.wrangler/wrangler.log" && vinext dev',
+  );
+  assert.match(packageJson.scripts.build, /^WRANGLER_LOG_PATH=/);
+  assert.match(packageJson.scripts["build:windows"], /^set "/);
+  assert.match(packageJson.scripts.start, /^WRANGLER_LOG_PATH=/);
+  assert.match(packageJson.scripts["start:windows"], /^set "/);
+});

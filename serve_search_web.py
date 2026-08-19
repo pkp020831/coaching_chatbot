@@ -17,6 +17,18 @@ from lesson_chatbot.gemini_client import GeminiAPIError
 from lesson_chatbot.retrieval import search_bm25
 
 
+PROJECT_ENV_PATH = Path(__file__).resolve().with_name(".env")
+
+
+def load_project_environment(env_path: Path = PROJECT_ENV_PATH) -> None:
+    """프로젝트 .env를 HTTP 요청을 받기 전에 로드한다."""
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    load_dotenv(dotenv_path=env_path, override=False)
+
+
 class SearchAPIHandler(BaseHTTPRequestHandler):
     database_path = Path("data/lessons.sqlite3")
     answer_client = None
@@ -115,12 +127,22 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    load_project_environment()
     args = parse_args()
     database_path = args.database.expanduser().resolve()
     if not database_path.is_file():
         raise SystemExit(f"DB를 찾을 수 없습니다: {database_path}")
     SearchAPIHandler.database_path = database_path
-    server = ThreadingHTTPServer((args.host, args.port), SearchAPIHandler)
+    try:
+        server = ThreadingHTTPServer((args.host, args.port), SearchAPIHandler)
+    except OSError as error:
+        raise SystemExit(
+            f"API 서버를 시작할 수 없습니다: {args.host}:{args.port} "
+            "주소를 이미 사용 중인지 확인해 주세요. "
+            "이미 챗봇 API가 실행 중이면 새로 실행할 필요가 없습니다. "
+            "다른 프로그램이 사용 중이면 해당 프로그램을 종료해 주세요. "
+            f"(원인: {error})"
+        ) from error
     print(f"BM25 검색 API: http://{args.host}:{args.port}")
     try:
         server.serve_forever()

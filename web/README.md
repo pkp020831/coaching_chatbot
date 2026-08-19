@@ -18,10 +18,31 @@ npm install
 python3 serve_search_web.py
 ```
 
+Windows에서는 프로젝트 최상위 폴더에서 다음 스크립트를 실행합니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start_api_windows.ps1
+```
+
 그다음 이 폴더에서 웹 서버를 실행합니다.
+
+macOS 또는 Linux:
 
 ```bash
 npm run dev
+```
+
+Windows에서는 두 번째 PowerShell을 열고 프로젝트 최상위 폴더에서 다음 스크립트를
+실행해도 됩니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start_web_windows.ps1
+```
+
+`web` 폴더 안에서 직접 실행하려면 Windows 전용 명령을 사용합니다.
+
+```powershell
+npm run dev:windows
 ```
 
 브라우저에서 `http://localhost:3000/`을 엽니다. Python API는
